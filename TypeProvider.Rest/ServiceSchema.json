@@ -1,0 +1,45 @@
+﻿{
+	"type": "object",
+	"$schema": "http://json-schema.org/draft-03/schema",
+	"id": "http://jsonschema.net",
+	"required": false,
+	"properties": {
+		"children": {
+			"type": "array",
+			"id": "http://jsonschema.net/children",
+			"required": false,
+			"items": {
+				"type": "string",
+				"id": "http://jsonschema.net/children",
+				"required": false
+			}
+		},
+		"path": {
+			"type": "string",
+			"id": "http://jsonschema.net/path",
+			"required": true
+		},
+		"verbs": {
+			"type": "array",
+			"id": "http://jsonschema.net/verbs",
+			"required": false,
+			"items": {
+				"type": "object",
+				"id": "http://jsonschema.net/verbs",
+				"required": false,
+				"properties": {
+					"response": {
+						"type": "string",
+						"id": "http://jsonschema.net/verbs/response",
+						"required": false
+					},
+					"verb": {
+						"type": "string",
+						"id": "http://jsonschema.net/verbs/verb",
+						"required": false
+					}
+				}
+			}
+		}
+	}
+}

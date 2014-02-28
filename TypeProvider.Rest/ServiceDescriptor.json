@@ -1,0 +1,13 @@
+﻿{
+	"verbs": [{
+		"verb": "GET",
+		"response": "IEnumerable<string>"
+	},
+	{
+		"verb": "POST",
+		"response": "Void",
+		"body": "string"
+	}],
+	"path": "/api/Values",
+	"children": ["/id/"]
+}
