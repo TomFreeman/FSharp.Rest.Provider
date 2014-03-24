@@ -10,10 +10,13 @@ open FSharp.Data
 open System.Net.Http.Headers
 open System.Net
 
+open TypeProvider.Rest.Helpers
+
 type Service(address) =
     member __.Address = address
 
 type descriptor = JsonProvider<"ServiceDescriptor.json">
+type jArray = JsonProvider<"StringEnum.json">
 
 [<TypeProvider>]
 type public RestfulProvider(cfg:TypeProviderConfig) as this =
@@ -22,7 +25,16 @@ type public RestfulProvider(cfg:TypeProviderConfig) as this =
     let determineType text =
         match text with
         | "string" -> Some(typeof<string>)
+        | "IEnumerable<string>" -> Some(typeof<seq<string>>)
         | _ -> Some(typeof<obj>)
+
+    let buildConstructor service typeText =       
+        match typeText with
+        | "string" -> ProvidedConstructor([], InvokeCode = fun [] -> <@@ doGet service id @@>),
+                      ProvidedConstructor([ProvidedParameter("uri", typeof<string>)], InvokeCode = fun[uri] -> <@@ doGet %%uri id @@>)
+        | "IEnumerable<string>" -> ProvidedConstructor([], InvokeCode = fun [] -> <@@ doGet service jArray.Parse @@>),
+                                   ProvidedConstructor([ProvidedParameter("uri", typeof<string>)], InvokeCode = fun[uri] -> <@@ doGet %%uri jArray.Parse @@>)
+        | _ -> ProvidedConstructor([]), ProvidedConstructor([ProvidedParameter("uri", typeof<string>)], InvokeCode = fun[uri] -> <@@ ignore @@>)
 
     let getDocs (root:String) (fragment:String) =
         async {
@@ -64,15 +76,21 @@ type public RestfulProvider(cfg:TypeProviderConfig) as this =
             let newType = 
                 match get with
                 | Some(g) -> let t = ProvidedTypeDefinition(Name, determineType(g.Response))
+                             
+                             let defaultCons, parameterCons = buildConstructor serviceRoot g.Response
+
+                             t.AddMember defaultCons
+                             t.AddMember parameterCons
+
                              t
-                | None -> ProvidedTypeDefinition(Name, Some(typeof<Service>))
+                | None -> let t = ProvidedTypeDefinition(Name, Some(typeof<Service>))
+                          // add a parameterless constructor which loads the service that was used to define the type
+                          t.AddMember(ProvidedConstructor([], InvokeCode = fun [] -> <@@ Service(serviceRoot) @@>))
 
-            // add a parameterless constructor which loads the service that was used to define the type
-            newType.AddMember(ProvidedConstructor([], InvokeCode = fun [] -> <@@ Service(serviceRoot) @@>))
-
-            // add a constructor taking the filename to load
-            newType.AddMember(ProvidedConstructor([ProvidedParameter("service", typeof<string>)], InvokeCode = fun [service] -> <@@ Service(%%service) @@>)) 
-
+                          // add a constructor taking the filename to load
+                          t.AddMember(ProvidedConstructor([ProvidedParameter("service", typeof<string>)], InvokeCode = fun [service] -> <@@ Service(%%service) @@>)) 
+                          t
+            
             for verb in otherVerbs do
                 AddVerb newType verb
             
@@ -127,6 +145,8 @@ type public RestfulProvider(cfg:TypeProviderConfig) as this =
         serv
         )
     
+    restTy.Add
+
     do this.AddNamespace(ns, [restTy])
 
 [<TypeProviderAssembly>]

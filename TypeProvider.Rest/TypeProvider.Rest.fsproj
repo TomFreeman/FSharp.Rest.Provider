@@ -61,13 +61,15 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="StringEnum.json" />
     <None Include="Script.fsx" />
     <Compile Include="ProvidedTypes-0.2.fsi" />
     <Compile Include="ProvidedTypes-0.2.fs" />
+    <Compile Include="ServiceHelpers.fs" />
     <Compile Include="ServiceProvider.fs" />
-    <None Include="ServiceDescriptor.json" />
     <None Include="packages.config" />
     <None Include="ServiceSchema.json" />
+    <None Include="ServiceDescriptor.json" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
