@@ -3,7 +3,7 @@
 open System
 open System.Reflection
 open System.IO
-open Samples.FSharp.ProvidedTypes
+open ProviderImplementation.ProvidedTypes
 open Microsoft.FSharp.Core.CompilerServices
 open System.Text.RegularExpressions
 open FSharp.Data
@@ -145,8 +145,6 @@ type public RestfulProvider(cfg:TypeProviderConfig) as this =
         serv
         )
     
-    restTy.Add
-
     do this.AddNamespace(ns, [restTy])
 
 [<TypeProviderAssembly>]
