@@ -5,18 +5,18 @@ open System.Reflection
 open System.IO
 open ProviderImplementation.ProvidedTypes
 open Microsoft.FSharp.Core.CompilerServices
+open ProviderImplementation
 open System.Text.RegularExpressions
 open FSharp.Data
 open System.Net.Http.Headers
 open System.Net
 
+open TypeProvider.Types
+
 open TypeProvider.Rest.Helpers
 
 type Service(address) =
     member __.Address = address
-
-type descriptor = JsonProvider<"ServiceDescriptor.json">
-type jArray = JsonProvider<"StringEnum.json">
 
 [<TypeProvider>]
 type public RestfulProvider(cfg:TypeProviderConfig) as this =
@@ -28,12 +28,15 @@ type public RestfulProvider(cfg:TypeProviderConfig) as this =
         | "IEnumerable<string>" -> Some(typeof<seq<string>>)
         | _ -> Some(typeof<obj>)
 
+    let parseArray text =
+        JsonValue.Parse(text).AsArray() |> Array.map (fun it -> it.AsString())
+
     let buildConstructor service typeText =       
         match typeText with
         | "string" -> ProvidedConstructor([], InvokeCode = fun [] -> <@@ doGet service id @@>),
                       ProvidedConstructor([ProvidedParameter("uri", typeof<string>)], InvokeCode = fun[uri] -> <@@ doGet %%uri id @@>)
-        | "IEnumerable<string>" -> ProvidedConstructor([], InvokeCode = fun [] -> <@@ doGet service jArray.Parse @@>),
-                                   ProvidedConstructor([ProvidedParameter("uri", typeof<string>)], InvokeCode = fun[uri] -> <@@ doGet %%uri jArray.Parse @@>)
+        | "IEnumerable<string>" -> ProvidedConstructor([], InvokeCode = fun [] -> <@@ doGet service parseArray @@>),
+                                   ProvidedConstructor([ProvidedParameter("uri", typeof<string>)], InvokeCode = fun[uri] -> <@@ doGet %%uri parseArray @@>)
         | _ -> ProvidedConstructor([]), ProvidedConstructor([ProvidedParameter("uri", typeof<string>)], InvokeCode = fun[uri] -> <@@ ignore @@>)
 
     let getDocs (root:String) (fragment:String) =
@@ -53,7 +56,7 @@ type public RestfulProvider(cfg:TypeProviderConfig) as this =
             let! text = response.Content.ReadAsStringAsync()
                         |> Async.AwaitTask
 
-            return descriptor.Parse(text)
+            return new Descriptor(text)
         }
 
     // Get the assembly and namespace used to house the provided types

@@ -27,6 +27,8 @@
     <StartProgram>C:\Program Files (x86)\Microsoft Visual Studio 12.0\Common7\IDE\devenv.exe</StartProgram>
     <StartArguments>TypeProvider.Rest.Tests.fsproj</StartArguments>
     <StartWorkingDirectory>C:\code\lib\selfdocumenting.typeprovider\TypeProvider.Rest.Tests\</StartWorkingDirectory>
+    <OtherFlags>
+    </OtherFlags>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -38,14 +40,6 @@
     <DocumentationFile>bin\Release\TypeProvider.Rest.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FSharp.Data">
-      <HintPath>..\packages\FSharp.Data.1.1.10\lib\net40\FSharp.Data.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="FSharp.Data.DesignTime">
-      <HintPath>..\packages\FSharp.Data.1.1.10\lib\net40\FSharp.Data.DesignTime.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -61,19 +55,43 @@
     </Reference>
     <Reference Include="System.Net.Http.WebRequest" />
     <Reference Include="System.Numerics" />
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
     <None Include="StringEnum.json" />
-    <Compile Include="ProvidedTypes.fsi" />
-    <None Include="Script.fsx" />
-    <Compile Include="ProvidedTypes.fs" />
+    <Compile Include="Json\Net\UriUtils.fs" />
+    <Compile Include="Json\Net\Http.fs" />
+    <Compile Include="Json\CommonRuntime\Caching.fs" />
+    <Compile Include="Json\CommonRuntime\IO.fs" />
+    <Compile Include="Json\CommonRuntime\Pluralizer.fs" />
+    <Compile Include="Json\CommonRuntime\NameUtils.fs" />
+    <Compile Include="Json\CommonRuntime\StructuralTypes.fs" />
+    <Compile Include="Json\CommonRuntime\TextConversions.fs" />
+    <Compile Include="Json\CommonRuntime\StructuralInference.fs" />
+    <Compile Include="Json\CommonRuntime\TextRuntime.fs" />
+    <Compile Include="Json\CommonProviderImplementation\ProvidedTypes.fsi" />
+    <Compile Include="Json\CommonProviderImplementation\ProvidedTypes.fs" />
+    <Compile Include="Json\CommonProviderImplementation\AssemblyReplacer.fs" />
+    <Compile Include="Json\CommonProviderImplementation\AssemblyResolver.fs" />
+    <Compile Include="Json\CommonProviderImplementation\QuotationBuilder.fs" />
+    <Compile Include="Json\CommonProviderImplementation\Helpers.fs" />
+    <Compile Include="Json\CommonProviderImplementation\ConversionsGenerator.fs" />
+    <Compile Include="Json\CommonProviderImplementation\Debug.fs" />
+    <Compile Include="Json\JsonValue.fs" />
+    <Compile Include="Json\JsonConversions.fs" />
+    <Compile Include="Json\JsonExtensions.fs" />
+    <Compile Include="Json\JsonRuntime.fs" />
+    <Compile Include="Json\JsonConversionsGenerator.fs" />
+    <Compile Include="Json\JsonInference.fs" />
+    <Compile Include="Json\JsonGenerator.fs" />
+    <Compile Include="Json\JsonProvider.fs" />
+    <Compile Include="ServiceDescriptor.fs" />
     <Compile Include="ServiceHelpers.fs" />
-    <Compile Include="ServiceProvider.fs" />
     <None Include="packages.config" />
     <None Include="ServiceSchema.json" />
     <None Include="ServiceDescriptor.json" />
-    <Compile Include="DebugProvidedTypes.fs" />
+    <Compile Include="ServiceProvider.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
