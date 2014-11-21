@@ -101,23 +101,23 @@ type public RestfulProvider(cfg:TypeProviderConfig) as this =
                 let uri = new Uri(serviceRoot)
                 let strippedRoot = uri.ToString().Replace(uri.AbsolutePath, String.Empty)
                 let newRoot = strippedRoot + docs.Path
-                let! (childType:ProvidedTypeDefinition) = BuildType newRoot child
+                let! childType = BuildType newRoot child
 
                 newType.AddMember childType
 
-                let childValue = new Service(newRoot)
+                // let childValue = new Service(newRoot)
 
-                let textInfo = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo
+//                let textInfo = System.Threading.Thread.CurrentThread.CurrentCulture.TextInfo
+//
+//                let newName = child.Replace("/", "")
+//                             |> textInfo.ToTitleCase
+//
+//                let publicProp = ProvidedLiteralField(
+//                    newName,
+//                    childType,
+//                    childValue)
 
-                let newName = child.Replace("/", "")
-                             |> textInfo.ToTitleCase
-
-                let publicProp = ProvidedLiteralField(
-                    newName,
-                    childType,
-                    childValue)
-
-                newType.AddMember publicProp
+//                newType.AddMember publicProp
 
             return newType
         }
