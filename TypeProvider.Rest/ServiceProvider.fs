@@ -59,6 +59,35 @@ type public RestfulProvider(cfg:TypeProviderConfig) as this =
             return new Descriptor(text)
         }
 
+    let getName (root : string) =
+
+        let (|NameAndType|Name|) (text : string) =
+            if text.StartsWith "%" then
+                let name :: typ :: _ = text.Split([|'%'; ':'|], StringSplitOptions.RemoveEmptyEntries)
+                                       |> Array.toList
+                NameAndType(name, typ)
+            else
+                Name(text)
+
+        let nameSection = root.Substring(root.LastIndexOf("/") + 1)
+
+        match nameSection with
+        | NameAndType(name, t) -> name, Some(t)
+        | Name(name) -> name, None
+
+    let (|ParameterisedGet|StraightGet|NoGet|) (indexer, (verbs:Verb[])) =
+        
+        let get = verbs 
+                  |> Array.tryFind (fun v -> v.Verb.Equals("get", StringComparison.OrdinalIgnoreCase))
+                  
+        if get.IsSome then
+            match indexer with
+            | Some(indexerType) -> ParameterisedGet(indexerType, get.Value)
+            | None -> StraightGet(get.Value)
+        else
+            NoGet
+
+
     // Get the assembly and namespace used to house the provided types
     let asm = System.Reflection.Assembly.GetExecutingAssembly()
     let ns = "TypeProvider.Service"
@@ -70,29 +99,45 @@ type public RestfulProvider(cfg:TypeProviderConfig) as this =
         async {
             let! docs = getDocs serviceRoot methodFragment
 
-            let Name = docs.Path.Substring(docs.Path.LastIndexOf("/") + 1)
+            let Name, indexerType = getName docs.Path
 
-            // If this resource has a straight get, then make it of the type that the get returns...
-            let get = docs.Verbs |> Array.tryFind (fun v -> v.Verb.Equals("get", StringComparison.OrdinalIgnoreCase))
             let otherVerbs = docs.Verbs |> Array.filter (fun v -> not <| v.Verb.Equals("get", StringComparison.OrdinalIgnoreCase))
 
             let newType = 
-                match get with
-                | Some(g) -> let t = ProvidedTypeDefinition(Name, determineType(g.Response))
+                // If this resource has a straight get, then make it of the type that the get returns...
+                match indexerType, docs.Verbs with
+                | ParameterisedGet(index, g) -> 
+                                    let containedType = determineType(g.Response)
+                                    
+                                    match (containedType) with
+                                    | Some(contained) -> 
+                                                         let genericType = typedefof<LazyIndexer<_>>
+                                                         let realType = genericType.MakeGenericType(contained)
+
+                                                         let t = ProvidedTypeDefinition(Name, Some(realType))
+
+                                                         let defaultCons, parameterCons = buildConstructor serviceRoot g.Response
+
+                                                         t.AddMember defaultCons
+                                                         t.AddMember parameterCons
+
+                                                         t                                                     
+                                    | _ -> failwith "Unable to determine type for parameterised Get."
+                | StraightGet(g) -> let t = ProvidedTypeDefinition(Name, determineType(g.Response))
                              
-                             let defaultCons, parameterCons = buildConstructor serviceRoot g.Response
+                                    let defaultCons, parameterCons = buildConstructor serviceRoot g.Response
 
-                             t.AddMember defaultCons
-                             t.AddMember parameterCons
+                                    t.AddMember defaultCons
+                                    t.AddMember parameterCons
 
-                             t
-                | None -> let t = ProvidedTypeDefinition(Name, Some(typeof<Service>))
-                          // add a parameterless constructor which loads the service that was used to define the type
-                          t.AddMember(ProvidedConstructor([], InvokeCode = fun [] -> <@@ Service(serviceRoot) @@>))
+                                    t
+                | NoGet -> let t = ProvidedTypeDefinition(Name, Some(typeof<Service>))
+                           // add a parameterless constructor which loads the service that was used to define the type
+                           t.AddMember(ProvidedConstructor([], InvokeCode = fun [] -> <@@ Service(serviceRoot) @@>))
 
-                          // add a constructor taking the filename to load
-                          t.AddMember(ProvidedConstructor([ProvidedParameter("service", typeof<string>)], InvokeCode = fun [service] -> <@@ Service(%%service) @@>)) 
-                          t
+                           // add a constructor taking the filename to load
+                           t.AddMember(ProvidedConstructor([ProvidedParameter("service", typeof<string>)], InvokeCode = fun [service] -> <@@ Service(%%service) @@>)) 
+                           t
             
             for verb in otherVerbs do
                 AddVerb newType verb

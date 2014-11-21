@@ -35,7 +35,7 @@ namespace TypeProvider.Service.Models
 
             var getObj = this.BuildVerbRepresentation("GET", "string");
             var postObj = this.BuildVerbRepresentation("PUT", "Void", "string");
-            HomeController.Add("path", "/api/Values/id");
+            HomeController.Add("path", "/api/Values/%id:string%");
             HomeController.Add("verbs", new JArray(getObj, postObj));
             HomeController.Add("children", new JArray());
             
